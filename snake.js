@@ -1,34 +1,17 @@
 const snakeBodySize = 20;
 const boardSize = 20;
 
-class SnakeBody {
-    constructor(canvas, posX, posY) {
+class Pixel {
+    constructor(canvas, posX, posY, colour) {
         this.posX = posX;
         this.posY = posY;
-
+        this.colour = colour;
         this.context = canvas.getContext("2d");
     }
 
     draw() {
         this.context.beginPath();
-        this.context.fillStyle = "red";
-
-        this.context.fillRect(this.posX * snakeBodySize, this.posY * snakeBodySize, snakeBodySize - 1, snakeBodySize - 1);
-        this.context.stroke();
-    }
-}
-
-class Food {
-    constructor(canvas, posX, posY) {
-        this.posX = posX;
-        this.posY = posY;
-
-        this.context = canvas.getContext("2d");
-    }
-
-    draw() {
-        this.context.beginPath();
-        this.context.fillStyle = "blue";
+        this.context.fillStyle = this.colour;
 
         this.context.fillRect(this.posX * snakeBodySize, this.posY * snakeBodySize, snakeBodySize - 1, snakeBodySize - 1);
         this.context.stroke();
@@ -73,7 +56,7 @@ function startGame() {
     var middlePoint = boardSize / 2;
 
     for (let snakePosition = 3; snakePosition >= 0; snakePosition--) {
-        var snakeBody = new SnakeBody(canvas, middlePoint - snakePosition, middlePoint);
+        var snakeBody = new Pixel(canvas, middlePoint - snakePosition, middlePoint, "red");
         snakePositions[middlePoint - snakePosition][middlePoint] = 1;
         snake.push(snakeBody);
     }
@@ -134,7 +117,7 @@ function update(progress) {
             isGameOver = true;
             drawText("Game Over!\nPress space");
         } else {
-            snake.push(new SnakeBody(canvas, nextXPos, nextYPos))
+            snake.push(new Pixel(canvas, nextXPos, nextYPos, "red"))
             snakePositions[nextXPos][nextYPos] = 1;
             currentFrameTime = 0;
         }
@@ -151,7 +134,7 @@ function isSnakeOfScreen(nextXPos, nextYPos) {
 
 function draw() {
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-    var food = new Food(canvas, foodPosition[0], foodPosition[1]);
+    var food = new Pixel(canvas, foodPosition[0], foodPosition[1], "blue");
     snake.forEach(snakeBody => {
         snakeBody.draw();
     });
@@ -178,7 +161,7 @@ document.addEventListener("keydown", logKey);
 
 function logKey(e) {
     var requestedKey = e.keyCode;
-    console.log(e.keyCode + " " + e.code);
+
     if (validMoveKeys.includes(requestedKey)) {
         if ((lastKeyDrawn == upKey && requestedKey != downKey) ||
             (lastKeyDrawn == downKey && requestedKey != upKey) ||
