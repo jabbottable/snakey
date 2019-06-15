@@ -40,9 +40,17 @@ var canvas = document.getElementById("myCanvas");
 canvas.height = boardSize * snakeBodySize;
 canvas.width = boardSize * snakeBodySize;
 
-var { snake, foodPosition, snakePositions, isGameOver } = startGame();
+var {
+    snake,
+    foodPosition,
+    snakePositions,
+    isGameOver
+} = startGame();
 
-var frameTime = 300;
+isGameOver = true;
+drawText("Welcome to Snakey!!\n\nPress space to\nbegin the adventure");
+
+var frameTime = 200;
 var currentFrameTime = 0;
 
 const upKey = 38;
@@ -66,17 +74,24 @@ function startGame() {
     var foodPosition = getRandomFoodPosition(snakePositions);
     snake.push(snakeBody);
     var isGameOver = false;
-    return { snake, foodPosition, snakePositions, isGameOver };
+    return {
+        snake,
+        foodPosition,
+        snakePositions,
+        isGameOver
+    };
 }
 
 function update(progress) {
+    if (isGameOver) {
+        return;
+    }
     currentFrameTime += progress;
 
     if (currentFrameTime > frameTime) {
         var snakeHead = snake[snake.length - 1];
 
         if (foodPosition[0] == snakeHead.posX && foodPosition[1] == snakeHead.posY) {
-
             foodPosition = getRandomFoodPosition(snakePositions);
             frameTime -= 10;
         } else {
@@ -106,6 +121,7 @@ function update(progress) {
 
         if (nextXPos < 0 || nextXPos == boardSize || nextYPos < 0 || nextYPos == boardSize) {
             isGameOver = true;
+            drawText("Game Over!\nPress space");
         } else {
             snake.push(new SnakeBody(canvas, nextXPos, nextYPos))
             snakePositions[nextXPos][nextYPos] = 1;
@@ -127,8 +143,8 @@ function draw() {
 function loop(timestamp) {
     var progress = timestamp - lastRender
 
+    update(progress)
     if (!isGameOver) {
-        update(progress)
         draw()
     }
 
@@ -154,11 +170,11 @@ function logKey(e) {
         }
     }
 
-    if(isGameOver && requestedKey == spaceKey){
+    if (isGameOver && requestedKey == spaceKey) {
         var newGame = startGame();
         snake = newGame.snake;
         foodPosition = newGame.foodPosition;
-        snakePositions = newGame.snakePositions; 
+        snakePositions = newGame.snakePositions;
         isGameOver = newGame.isGameOver;
     }
 }
@@ -184,4 +200,25 @@ function getRandomFoodPosition(snakePositions) {
     } while (snakePositions[foodPosition[0]][foodPosition[1]] == 1);
 
     return foodPosition;
+}
+
+function drawText(text) {
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "black";
+
+    const lineHeight = canvas.height/15;
+    const fontHeight = Math.floor(lineHeight * 0.9);
+    ctx.font = fontHeight + "px Arial";
+    ctx.textAlign = "center";
+
+    const texts = text.split("\n");
+    const numberOfLines = texts.length;
+
+    for (let line = 0; line < numberOfLines; line++) {
+        const lineText = texts[line];
+        const evenOffset = numberOfLines % 2 == 0 ? 0.5 : 0;
+        const offset = (line - Math.floor(numberOfLines / 2) + evenOffset) * lineHeight;
+        ctx.fillText(lineText, canvas.width / 2, (canvas.height / 2) + offset + lineHeight / 2);
+    }
 }
