@@ -40,17 +40,9 @@ var canvas = document.getElementById("myCanvas");
 canvas.height = boardSize * snakeBodySize;
 canvas.width = boardSize * snakeBodySize;
 
-var {
-    snake,
-    foodPosition,
-    snakePositions,
-    isGameOver
-} = startGame();
-
 isGameOver = true;
 drawText("Welcome to Snakey!!\n\nPress space to\nbegin the adventure");
 
-var frameTime = 200;
 var currentFrameTime = 0;
 
 const upKey = 38;
@@ -63,22 +55,41 @@ const spaceKey = 32;
 
 const validMoveKeys = [upKey, downKey, leftKey, rightKey];
 
-var currentKey = rightKey;
+var {
+    snake,
+    foodPosition,
+    snakePositions,
+    isGameOver,
+    frameTime,
+    currentKey
+} = startGame();
+
 var lastKeyDrawn = currentKey;
 
 function startGame() {
     var snake = [];
     var snakePositions = makeBoard(boardSize);
-    var snakeBody = new SnakeBody(canvas, boardSize / 2, boardSize / 2);
-    snakePositions[boardSize / 2][boardSize / 2] = 1;
+
+    var middlePoint = boardSize / 2;
+
+    for (let snakePosition = 3; snakePosition >= 0; snakePosition--) {
+        var snakeBody = new SnakeBody(canvas, middlePoint - snakePosition, middlePoint);
+        snakePositions[middlePoint - snakePosition][middlePoint] = 1;
+        snake.push(snakeBody);
+    }
+
     var foodPosition = getRandomFoodPosition(snakePositions);
-    snake.push(snakeBody);
     var isGameOver = false;
+    var frameTime = 200;
+
+    var currentKey = rightKey;
     return {
         snake,
         foodPosition,
         snakePositions,
-        isGameOver
+        isGameOver,
+        frameTime,
+        currentKey
     };
 }
 
@@ -119,7 +130,7 @@ function update(progress) {
 
         lastKeyDrawn = currentKey;
 
-        if (nextXPos < 0 || nextXPos == boardSize || nextYPos < 0 || nextYPos == boardSize) {
+        if (isSnakeOfScreen(nextXPos, nextYPos) || willSnakeEatSelf(nextXPos, nextYPos)) {
             isGameOver = true;
             drawText("Game Over!\nPress space");
         } else {
@@ -128,6 +139,14 @@ function update(progress) {
             currentFrameTime = 0;
         }
     }
+}
+
+function willSnakeEatSelf(nextXPos, nextYPos) {
+    return snakePositions[nextXPos][nextYPos] == 1;
+}
+
+function isSnakeOfScreen(nextXPos, nextYPos) {
+    return nextXPos < 0 || nextXPos == boardSize || nextYPos < 0 || nextYPos == boardSize;
 }
 
 function draw() {
@@ -176,6 +195,8 @@ function logKey(e) {
         foodPosition = newGame.foodPosition;
         snakePositions = newGame.snakePositions;
         isGameOver = newGame.isGameOver;
+        frameTime = newGame.frameTime;
+        currentKey = newGame.currentKey;
     }
 }
 
