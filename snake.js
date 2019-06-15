@@ -1,3 +1,76 @@
+const upKey = 38;
+const downKey = 40;
+const leftKey = 37;
+const rightKey = 39;
+const spaceKey = 32;
+
+class Game {
+    constructor(boardSize) {
+        this.resetGame(boardSize)
+        this.highScore = 0;
+    }
+
+    resetGame(boardSize) {        
+        this.snake = [];
+        this.snakePositions = makeBoard(boardSize);
+    
+        var middlePoint = boardSize / 2;
+    
+        for (let snakePosition = 3; snakePosition >= 0; snakePosition--) {
+            var snakeBody = new Pixel(canvas, middlePoint - snakePosition, middlePoint, "red");
+            this.snakePositions[middlePoint - snakePosition][middlePoint] = 1;
+            this.snake.push(snakeBody);
+        }
+    
+        this.getNewRandomFoodPosition(this.snakePositions);
+        this.isGameOver = false;
+        this.frameTime = 150;
+        this.score = 0;
+        this.currentKey = rightKey;
+        this.lastKeyDrawn = this.currentKey;
+    }
+
+    getNewRandomFoodPosition() {
+        var size = this.snakePositions.length;
+        var newFoodPosition = [];
+    
+        do {
+            newFoodPosition[0] = Math.floor(Math.random() * Math.floor(size));
+            newFoodPosition[1] = Math.floor(Math.random() * Math.floor(size));
+        } while (this.snakePositions[newFoodPosition[0]][newFoodPosition[1]] == 1);
+    
+        this.foodPosition = newFoodPosition;
+    }
+
+    snakeHead() {
+        return this.snake[this.snake.length - 1];
+    }
+
+    getNextPositions() {
+        var nextXPos = this.snakeHead().posX;
+        var nextYPos = this.snakeHead().posY;
+        switch (this.currentKey) {
+            case upKey:
+                nextYPos--;
+                break;
+            case downKey:
+                nextYPos++;
+                break;
+            case leftKey:
+                nextXPos--;
+                break;
+            case rightKey:
+                nextXPos++;
+                break;
+        }
+        return { nextXPos, nextYPos };
+    }
+
+    willSnakeEatSelf(nextXPos, nextYPos) {
+        return this.snakePositions[nextXPos][nextYPos] == 1;
+    }
+}
+
 const snakeBodySize = 20;
 const boardSize = 20;
 
@@ -23,119 +96,48 @@ var canvas = document.getElementById("myCanvas");
 canvas.height = boardSize * snakeBodySize;
 canvas.width = boardSize * snakeBodySize;
 
-isGameOver = true;
-drawText("Welcome to Snakey!!\n\nPress space to\nbegin the adventure");
-
 var currentFrameTime = 0;
-
-const upKey = 38;
-const downKey = 40;
-const leftKey = 37;
-const rightKey = 39;
-const spaceKey = 32;
-
-
 
 const validMoveKeys = [upKey, downKey, leftKey, rightKey];
 
-var {
-    snake,
-    foodPosition,
-    snakePositions,
-    isGameOver,
-    frameTime,
-    currentKey,
-    score
-} = startGame();
+var game = new Game(boardSize);
 
-var highScore = 0;
-var lastKeyDrawn = currentKey;
-
-function startGame() {
-    var snake = [];
-    var snakePositions = makeBoard(boardSize);
-
-    var middlePoint = boardSize / 2;
-
-    for (let snakePosition = 3; snakePosition >= 0; snakePosition--) {
-        var snakeBody = new Pixel(canvas, middlePoint - snakePosition, middlePoint, "red");
-        snakePositions[middlePoint - snakePosition][middlePoint] = 1;
-        snake.push(snakeBody);
-    }
-
-    var foodPosition = getRandomFoodPosition(snakePositions);
-    var isGameOver = false;
-    var frameTime = 150;
-    var score = 0;
-
-    var currentKey = rightKey;
-    return {
-        snake,
-        foodPosition,
-        snakePositions,
-        isGameOver,
-        frameTime,
-        currentKey,
-        score
-    };
-}
+game.isGameOver = true;
+drawText("Welcome to Snakey!!\n\nPress space to\nbegin the adventure");
 
 function update(progress) {
-    if (isGameOver) {
+    if (game.isGameOver) {
         return;
     }
     currentFrameTime += progress;
 
-    if (currentFrameTime > frameTime) {
-        var snakeHead = snake[snake.length - 1];
-
-        if (foodPosition[0] == snakeHead.posX && foodPosition[1] == snakeHead.posY) {
-            foodPosition = getRandomFoodPosition(snakePositions);
-            frameTime -= 1;
-            score++;
-            updateScore(score);
+    if (currentFrameTime > game.frameTime) { 
+        if (game.foodPosition[0] == game.snakeHead().posX && game.foodPosition[1] == game.snakeHead().posY) {
+            game.getNewRandomFoodPosition(game.snakePositions);
+            game.frameTime -= 1;
+            game.score++;
+            updateScore(game.score);
         } else {
-            var snakeEnd = snake.shift();
-            snakePositions[snakeEnd.posX][snakeEnd.posY] = 0;
+            var snakeEnd = game.snake.shift();
+            game.snakePositions[snakeEnd.posX][snakeEnd.posY] = 0;
         }
 
-        var nextXPos = snakeHead.posX;
-        var nextYPos = snakeHead.posY;
+        var { nextXPos, nextYPos } = game.getNextPositions();
+        game.lastKeyDrawn = game.currentKey;
 
-        switch (currentKey) {
-            case upKey:
-                nextYPos--;
-                break;
-            case downKey:
-                nextYPos++;
-                break;
-            case leftKey:
-                nextXPos--;
-                break;
-            case rightKey:
-                nextXPos++;
-                break;
-        }
-
-        lastKeyDrawn = currentKey;
-
-        if (isSnakeOfScreen(nextXPos, nextYPos) || willSnakeEatSelf(nextXPos, nextYPos)) {
-            if(score > highScore) {
-                highScore = score;
-                updateHighScore(highScore)
+        if (isSnakeOfScreen(nextXPos, nextYPos) || game.willSnakeEatSelf(nextXPos, nextYPos)) {
+            if(game.score > game.highScore) {
+                game.highScore = game.score;
+                updateHighScore(game.highScore)
             }
-            isGameOver = true;
+            game.isGameOver = true;
             drawText("Game Over!\nPress space");
         } else {
-            snake.push(new Pixel(canvas, nextXPos, nextYPos, "red"))
-            snakePositions[nextXPos][nextYPos] = 1;
+            game.snake.push(new Pixel(canvas, nextXPos, nextYPos, "red"))
+            game.snakePositions[nextXPos][nextYPos] = 1;
             currentFrameTime = 0;
         }
     }
-}
-
-function willSnakeEatSelf(nextXPos, nextYPos) {
-    return snakePositions[nextXPos][nextYPos] == 1;
 }
 
 function isSnakeOfScreen(nextXPos, nextYPos) {
@@ -144,8 +146,8 @@ function isSnakeOfScreen(nextXPos, nextYPos) {
 
 function draw() {
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-    var food = new Pixel(canvas, foodPosition[0], foodPosition[1], "blue");
-    snake.forEach(snakeBody => {
+    var food = new Pixel(canvas, game.foodPosition[0], game.foodPosition[1], "blue");
+    game.snake.forEach(snakeBody => {
         snakeBody.draw();
     });
 
@@ -156,7 +158,7 @@ function loop(timestamp) {
     var progress = timestamp - lastRender
 
     update(progress)
-    if (!isGameOver) {
+    if (!game.isGameOver) {
         draw()
     }
 
@@ -173,24 +175,17 @@ function logKey(e) {
     var requestedKey = e.keyCode;
 
     if (validMoveKeys.includes(requestedKey)) {
-        if ((lastKeyDrawn == upKey && requestedKey != downKey) ||
-            (lastKeyDrawn == downKey && requestedKey != upKey) ||
-            (lastKeyDrawn == leftKey && requestedKey != rightKey) ||
-            (lastKeyDrawn == rightKey && requestedKey != leftKey)) {
-            currentKey = requestedKey;
-            return;
+        if ((game.lastKeyDrawn == upKey && requestedKey != downKey) ||
+            (game.lastKeyDrawn == downKey && requestedKey != upKey) ||
+            (game.lastKeyDrawn == leftKey && requestedKey != rightKey) ||
+            (game.lastKeyDrawn == rightKey && requestedKey != leftKey)) {
+            game.currentKey = requestedKey;
+            return; 
         }
     }
 
-    if (isGameOver && requestedKey == spaceKey) {
-        var newGame = startGame();
-        snake = newGame.snake;
-        foodPosition = newGame.foodPosition;
-        snakePositions = newGame.snakePositions;
-        isGameOver = newGame.isGameOver;
-        frameTime = newGame.frameTime;
-        currentKey = newGame.currentKey;
-        score = newGame.score;
+    if (game.isGameOver && requestedKey == spaceKey) {
+        game.resetGame(boardSize);
     }
 }
 
@@ -202,19 +197,6 @@ function makeBoard(boardSize) {
             length: boardSize
         }, () => 0)
     );
-}
-
-function getRandomFoodPosition(snakePositions) {
-    var size = snakePositions.length;
-
-    var foodPosition = [];
-
-    do {
-        foodPosition[0] = Math.floor(Math.random() * Math.floor(size));
-        foodPosition[1] = Math.floor(Math.random() * Math.floor(size));
-    } while (snakePositions[foodPosition[0]][foodPosition[1]] == 1);
-
-    return foodPosition;
 }
 
 function drawText(text) {
@@ -245,6 +227,5 @@ function updateScore(score) {
 
 function updateHighScore(score) {
     var scoreElement = document.getElementById("highScore");
-
-    scoreElement.innerHTML = "High Score = " + score;
+    scoreElement.innerHTML = "High score = " + score;
 }
