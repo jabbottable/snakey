@@ -44,9 +44,11 @@ var {
     snakePositions,
     isGameOver,
     frameTime,
-    currentKey
+    currentKey,
+    score
 } = startGame();
 
+var highScore = 0;
 var lastKeyDrawn = currentKey;
 
 function startGame() {
@@ -63,7 +65,8 @@ function startGame() {
 
     var foodPosition = getRandomFoodPosition(snakePositions);
     var isGameOver = false;
-    var frameTime = 200;
+    var frameTime = 150;
+    var score = 0;
 
     var currentKey = rightKey;
     return {
@@ -72,7 +75,8 @@ function startGame() {
         snakePositions,
         isGameOver,
         frameTime,
-        currentKey
+        currentKey,
+        score
     };
 }
 
@@ -87,7 +91,9 @@ function update(progress) {
 
         if (foodPosition[0] == snakeHead.posX && foodPosition[1] == snakeHead.posY) {
             foodPosition = getRandomFoodPosition(snakePositions);
-            frameTime -= 10;
+            frameTime -= 1;
+            score++;
+            updateScore(score);
         } else {
             var snakeEnd = snake.shift();
             snakePositions[snakeEnd.posX][snakeEnd.posY] = 0;
@@ -114,6 +120,10 @@ function update(progress) {
         lastKeyDrawn = currentKey;
 
         if (isSnakeOfScreen(nextXPos, nextYPos) || willSnakeEatSelf(nextXPos, nextYPos)) {
+            if(score > highScore) {
+                highScore = score;
+                updateHighScore(highScore)
+            }
             isGameOver = true;
             drawText("Game Over!\nPress space");
         } else {
@@ -180,6 +190,7 @@ function logKey(e) {
         isGameOver = newGame.isGameOver;
         frameTime = newGame.frameTime;
         currentKey = newGame.currentKey;
+        score = newGame.score;
     }
 }
 
@@ -225,4 +236,15 @@ function drawText(text) {
         const offset = (line - Math.floor(numberOfLines / 2) + evenOffset) * lineHeight;
         ctx.fillText(lineText, canvas.width / 2, (canvas.height / 2) + offset + lineHeight / 2);
     }
+}
+
+function updateScore(score) {
+    var scoreElement = document.getElementById("score");
+    scoreElement.innerHTML = "Score = " + score;
+}
+
+function updateHighScore(score) {
+    var scoreElement = document.getElementById("highScore");
+
+    scoreElement.innerHTML = "High Score = " + score;
 }
