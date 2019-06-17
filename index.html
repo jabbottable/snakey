@@ -2,6 +2,19 @@
 <html>
 
 <head>
+<script>
+function cnvs_getCoordinates(e)
+{
+x=e.clientX;
+y=e.clientY;
+document.getElementById("xycoordinates").innerHTML="Coordinates: (" + x + "," + y + ")";
+}
+
+function cnvs_clearCoordinates()
+{
+document.getElementById("xycoordinates").innerHTML="";
+}
+</script>
     <meta charset="utf-8">
     <title>Snakey!</title>
     <style>
@@ -34,11 +47,13 @@
 
 <body>
     <div id="gameWrapper">
-        <div id="game"><canvas id="myCanvas" width="300" height="300">
+        <div id="game"><canvas id="myCanvas" width="300" height="300" onmousemove="cnvs_getCoordinates(event)" onmouseout="cnvs_clearCoordinates()">
                 Your browser does not support the HTML5 canvas tag.</canvas></div>
         <div id="score">Score = 0</div>
         <div id="highScore">High Score = 0</div>
     </div>
+
+<div id="xycoordinates"></div>
     <script src="src/index.js"></script>
 
 </body>
